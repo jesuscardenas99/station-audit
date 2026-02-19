@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plant 2 - Audit Dashboard</title>
+
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --bg-dark: #212529;
+        --surface-dark: #363c42;
+        --primary-blue: #3583dc;
+        --border-color: #4f565e;
+        --text-light: #eff5fa;
+        --text-muted: #b8bec5;
+      }
+      body {
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+      }
+
+      .navbar {
+        background-color: black !important;
+        border-bottom: 2px solid var(--primary-blue);
+      }
+
+      .navbar-light .navbar-brand,
+      .navbar-light .navbar-nav .nav-link {
+        color: var(--text-light) !important;
+        transition: color 0.2s ease-in-out;
+        margin-left: 10px;
+        margin-right: 10px;
+      }
+
+      .navbar-light .navbar-nav .nav-link:hover {
+        color: var(--primary-blue) !important;
+      }
+
+      .table > tbody > th > tr > td {
+        vertical-align: middle;
+        font-size: 0.7rem;
+        background-color: #f0f0f0;
+        width: 100%;
+      }
+      .station-name {
+        font-size: 0.4rem;
+        text-align: left;
+        background-color: #e9ecef;
+      }
+      .today-column {
+        background-color: #d7ecfc !important;
+      }
+      .btn-primary {
+        background-color: #2196f3;
+        font-weight: bold;
+      }
+      .btn-warning {
+        background-color: #ffeb3b;
+        font-weight: bold;
+      }
+      .btn-danger {
+        background-color: #e53935;
+        font-weight: bold;
+      }
+      .btn-success {
+        background-color: #4caf50;
+        color: rgb(243, 243, 243);
+        font-weight: bold;
+      }
+
+      .btn-sm {
+        width: 100px;
+        height: 30px;
+        font-size: 0.7rem;
+      }
+      .btn-sm1 {
+        width: 100px;
+        height: 30px;
+        font-size: 0.7rem;
+      }
+      .btn-start-audit {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .itemconfiguration {
+        height: calc(100vh - 200px);
+        overflow-y: auto;
+      }
+      strong {
+        font-size: 1.2rem;
+      }
+      #audit-table thead th {
+        text-align: center;
+        vertical-align: middle;
+      }
+      .btn-secondary {
+        background-color: var(--primary-blue);
+        margin-bottom: 5px;
+        margin-top: 0px;
+        position: absolute;
+      }
+      .btn-secondary:hover {
+        background-color: #ee3649;
+      }
+      .dt-column-title {
+        text-align: center;
+      }
+      .table-container {
+        width: 100% !important;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-md bg-light navbar-light shadow-sm">
+      <div class="container">
+        <img
+          src="img/logo.png"
+          alt="Enersys Logo"
+          width="6%"
+          style="float: left"
+        />
+        <li class="nav-item" style="list-style-type: none">
+          -Springfield Plant 2
+        </li>
+        <a href="./dashboard.html" class="navbar-brand">Home</a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a href="./escalations.html" class="nav-link">Audit Items</a>
+            </li>
+            <li class="nav-item">
+              <a href="./controlEscalations.html" class="nav-link"
+                >Control Plan Items</a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="./analysis_overview.html" class="nav-link"
+                >Overview Analysis</a
+              >
+            </li>
+            <li class="nav-item" id="admin-nav-item">
+              <a href="./admin.html" class="nav-link">Admin Page</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container my-3">
+      <div class="row">
+        <div class="col-sm-4 form-group">
+          <label for="weeklyDatePicker">Week</label>
+          <p class="text-muted" style="margin-bottom: 0px" id=""></p>
+          <div class="input-group">
+            <input
+              type="text"
+              id="weeklyDatePicker"
+              class="form-control"
+              placeholder="Select A Date"
+            />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label for="area-filter" style="margin-bottom: 0px" class="form-label"
+            >Area:</label
+          >
+          <select id="area-filter" class="form-select" required></select>
+        </div>
+        <div class="col-md-3">
+          <h3 class="text-center md-4" style="margin-bottom: 0px">
+            Quality Shift Audit
+          </h3>
+        </div>
+      </div>
+      <br />
+
+      <div class="table-container">
+        <table id="audit-table" class="table table-bordered text-center">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 10%">Station</th>
+              <th>Sun</th>
+              <th>Mon</th>
+              <th>Tue</th>
+              <th>Wed</th>
+              <th>Thu</th>
+              <th>Fri</th>
+              <th>Sat</th>
+              <th style="width: 5%">Count</th>
+              <th style="width: 7%">Audit %</th>
+              <th style="width: 7%">CP %</th>
+            </tr>
+          </thead>
+
+          <tbody id="dashboard-body"></tbody>
+          <tfoot>
+            <tr>
+              <th colspan="8" style="text-align: right">
+                <strong>Totals:</strong>
+              </th>
+              <th></th>
+              <th></th>
+              <th></th>
+            </tr>
+            <tr>
+              <th colspan="10" style="text-align: right">
+                <strong>Weekly Average %:</strong>
+              </th>
+              <th></th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        $(document).ready(function () {
+          const API_BASE_URL = "/system/webdev/Quality/tech_audit/Springfield";
+
+          $("#weeklyDatePicker").datetimepicker({
+            format: "MM-DD-YYYY",
+            useCurrent: true,
+          });
+          $("#weeklyDatePicker").on("dp.change", fetchAndRenderDashboard);
+          $("#area-filter").on("change", fetchAndRenderDashboard);
+
+          populateAreaFilter();
+
+          function populateAreaFilter() {
+            const areaSelect = $("#area-filter");
+            areaSelect.empty().append('<option value="all">All Areas</option>');
+            $.getJSON(API_BASE_URL + "/api/active_areas", function (areas) {
+              areas.forEach((area) => {
+                areaSelect.append(
+                  `<option value="${area.area_id}">${area.area_name}</option>`,
+                );
+              });
+              let initialDate = localStorage.getItem("selectedWeek")
+                ? moment(localStorage.getItem("selectedWeek"))
+                : moment();
+              $("#weeklyDatePicker").data("DateTimePicker").date(initialDate);
+            });
+          }
+
+          function fetchAndRenderDashboard() {
+            const selectedDate = $("#weeklyDatePicker")
+              .data("DateTimePicker")
+              .date();
+            if (!selectedDate) return;
+            const startDate = selectedDate.clone().day(0);
+            const endDate = startDate.clone().add(6, "days");
+            const selectedAreaId = $("#area-filter").val();
+
+            localStorage.setItem(
+              "selectedWeek",
+              selectedDate.format("YYYY-MM-DD"),
+            );
+            let apiUrl = `${API_BASE_URL}/api/dashboard?start_date=${startDate.format(
+              "YYYY-MM-DD",
+            )}&end_date=${endDate.format("YYYY-MM-DD")}`;
+            if (selectedAreaId && selectedAreaId !== "all") {
+              apiUrl += `&area_id=${selectedAreaId}`;
+            }
+            $("#dashboard-body").html(
+              '<tr><td colspan="10" class="text-center">Loading...</td></tr>',
+            );
+            $.getJSON(apiUrl, function (data) {
+              renderTable(data, startDate);
+            });
+          }
+
+          function renderTable(data, firstDateOfWeek) {
+            // Check if a DataTable instance exists and destroy it first.
+            if ($.fn.DataTable.isDataTable("#audit-table")) {
+              $("#audit-table").DataTable().destroy();
+            }
+
+            const tableBody = $("#dashboard-body");
+            const tableHeaders = $("#audit-table > thead > tr > th");
+            tableBody.empty(); // Clear old data
+
+            const todayStr = moment().format("YYYY-MM-DD");
+            for (let i = 0; i < 7; i++) {
+              const currentDay = firstDateOfWeek.clone().add(i, "days");
+              const headerCell = tableHeaders.eq(i + 1);
+              headerCell.text(currentDay.format("ddd (MM/DD)"));
+              if (currentDay.format("YYYY-MM-DD") === todayStr) {
+                headerCell.addClass("today-column");
+              } else {
+                headerCell.removeClass("today-column");
+              }
+            }
+
+            if (data.length === 0) {
+              tableBody.html(
+                '<tr><td colspan="11" class="text-center">No audits found for this period.</td></tr>',
+              );
+            } else {
+              data.forEach((station) => {
+                const stationId = station.station_id;
+                const audits = station.audits;
+                const nickname = station.nickname;
+
+                const auditCount = audits.length / 2;
+
+                // --- Calculate weekly audit averages ---
+                let totalQualityPercentage = 0;
+                let qualityAuditCount = 0;
+                let totalControlPercentage = 0;
+                let controlAuditCount = 0;
+
+                audits.forEach((audit) => {
+                  // Sum up Control Plan percentages and count how many there are
+                  if (audit.control_plan_percentage != null) {
+                    totalControlPercentage += audit.control_plan_percentage;
+                    controlAuditCount++;
+                  }
+                  // Sum up Quality percentages and count how many there are
+                  if (audit.quality_percentage != null) {
+                    totalQualityPercentage += audit.quality_percentage;
+                    qualityAuditCount++;
+                  }
+                });
+
+                // Calculate the average for each type, checking for division by zero
+                const avgQuality =
+                  qualityAuditCount > 0
+                    ? Math.round(totalQualityPercentage / qualityAuditCount)
+                    : null;
+
+                const avgControlQuality =
+                  controlAuditCount > 0
+                    ? Math.round(totalControlPercentage / controlAuditCount)
+                    : null;
+
+                const getPercentageCellHtml = (percentage) => {
+                  if (percentage === null) {
+                    return "<td>N/A</td>";
+                  }
+                  const textColor =
+                    percentage >= 90
+                      ? "text-success"
+                      : percentage >= 80
+                        ? "text-warning"
+                        : "text-danger";
+                  return `<td><strong class="${textColor}">${percentage}%</strong></td>`;
+                };
+
+                // --- Build the table row HTML ---
+                let rowHtml = `<tr><td class="station-cell"><a href="select_audit_type.html?station_id=${stationId}" class="btn btn-sm1 btn-primary btn-start-audit lh-1">${station.nickname}</a></td>`;
+
+                const cells = Array(7).fill("<td></td>");
+                const auditsByDay = {};
+                audits.forEach((audit) => {
+                  const dayIndex = moment(audit.audit_date).day();
+                  if (!auditsByDay[dayIndex]) auditsByDay[dayIndex] = [];
+                  auditsByDay[dayIndex].push(audit);
+                });
+
+                for (let i = 0; i < 7; i++) {
+                  const dayAudits = auditsByDay[i] || [];
+                  if (dayAudits.length > 0) {
+                    const dateStr = firstDateOfWeek
+                      .clone()
+                      .add(i, "days")
+                      .format("YYYY-MM-DD");
+                    const qualityAudits = dayAudits.filter(
+                      (a) => a.quality_percentage != null,
+                    );
+                    let buttonText = "",
+                      buttonClass = "btn-secondary";
+                    if (qualityAudits.length > 0) {
+                      const avgPercentage =
+                        qualityAudits.reduce(
+                          (sum, audit) => sum + audit.quality_percentage,
+                          0,
+                        ) / qualityAudits.length;
+                      const roundedAvg = Math.round(avgPercentage);
+                      buttonClass =
+                        avgPercentage >= 90
+                          ? "btn-success"
+                          : avgPercentage >= 80
+                            ? "btn-warning"
+                            : "btn-danger";
+                      buttonText = `${roundedAvg}%`;
+                    } else {
+                      buttonText = "ControlPlan"; // Fallback for Control Plan only
+                      buttonClass = "btn-info";
+                    }
+                    if (dayAudits.length > 1) {
+                      buttonText += ` (x${dayAudits.length / 2})`;
+                    }
+                    cells[i] =
+                      `<td><a href="select_audit.html?station_id=${stationId}&date=${dateStr}" class="btn btn-sm ${buttonClass}">${buttonText}</a></td>`;
+                  }
+                }
+                const todayIndex = moment().day();
+                if (tableHeaders.eq(todayIndex + 1).hasClass("today-column")) {
+                  cells[todayIndex] = cells[todayIndex].replace(
+                    "<td>",
+                    '<td class="today-column">',
+                  );
+                }
+
+                rowHtml += cells.join("");
+                rowHtml += `<td><strong>${auditCount}x</strong></td>`;
+                rowHtml += getPercentageCellHtml(avgQuality); // Audit % column
+                rowHtml += getPercentageCellHtml(avgControlQuality); // CP % column
+
+                rowHtml += `</tr>`;
+                tableBody.append(rowHtml);
+              });
+            }
+
+            $("#audit-table").DataTable({
+              footerCallback: function (row, data, start, end, display) {
+                let api = this.api();
+
+                // Helper function to  parse numbers from HTML content
+                const parseHtmlValue = (html) => {
+                  if (typeof html !== "string" || html.includes("N/A")) {
+                    return null;
+                  }
+                  const match = html.match(/-?[\d\.]+/);
+                  return match ? parseFloat(match[0]) : null;
+                };
+
+                const getColoredPercentageHtml = (percentage) => {
+                  if (percentage === "N/A" || percentage === null) {
+                    return "N/A";
+                  }
+                  const colorClass =
+                    percentage >= 90
+                      ? "text-success"
+                      : percentage >= 80
+                        ? "text-warning"
+                        : "text-danger";
+                  return `<strong class="${colorClass}">${percentage}%</strong>`;
+                };
+
+                // --- Calculate Total Audit Count (from Column 8) ---
+                const totalCount = api
+                  .column(8, { page: "current" })
+                  .data()
+                  .reduce((acc, html) => {
+                    const val = parseHtmlValue(html);
+                    return acc + (val || 0);
+                  }, 0);
+
+                // --- Calculate Percentage Averages ---
+                let auditPercentSum = 0;
+                let auditPercentCount = 0;
+                let cpPercentSum = 0;
+                let cpPercentCount = 0;
+
+                api.rows({ page: "current" }).every(function () {
+                  const rowData = this.data();
+                  const auditVal = parseHtmlValue(rowData[9]);
+                  if (auditVal !== null) {
+                    auditPercentSum += auditVal;
+                    auditPercentCount++;
+                  }
+                  const cpVal = parseHtmlValue(rowData[10]);
+                  if (cpVal !== null) {
+                    cpPercentSum += cpVal;
+                    cpPercentCount++;
+                  }
+                });
+
+                const avgAuditPercent =
+                  auditPercentCount > 0
+                    ? Math.round(auditPercentSum / auditPercentCount)
+                    : "N/A";
+                const avgCpPercent =
+                  cpPercentCount > 0
+                    ? Math.round(cpPercentSum / cpPercentCount)
+                    : "N/A";
+
+                // ---  Calculate Global Average ---
+                const globalSum = auditPercentSum + cpPercentSum;
+                const globalCount = auditPercentCount + cpPercentCount;
+                const avgGlobalPercent =
+                  globalCount > 0 ? Math.round(globalSum / globalCount) : "N/A";
+
+                const footerRows = $(api.table().footer()).find("tr");
+
+                $(footerRows[0])
+                  .find("th")
+                  .eq(1)
+                  .html(`<strong>${totalCount}x</strong>`);
+
+                $(footerRows[0])
+                  .find("th")
+                  .eq(2)
+                  .html(getColoredPercentageHtml(avgAuditPercent));
+                $(footerRows[0])
+                  .find("th")
+                  .eq(3)
+                  .html(getColoredPercentageHtml(avgCpPercent));
+
+                $(footerRows[1])
+                  .find("th")
+                  .eq(1)
+                  .html(getColoredPercentageHtml(avgGlobalPercent));
+              },
+
+              dom: "Bfrtip",
+              buttons: ["excelHtml5"],
+              searching: false,
+              ordering: false,
+              paging: false,
+              info: false,
+              scrollY: "80vh",
+              scrollX: true,
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

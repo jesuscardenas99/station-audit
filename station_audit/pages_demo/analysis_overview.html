@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audit Analysis (Demo)</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --bg-dark: #212529;
+        --surface-dark: #363c42;
+        --primary-blue: #3583dc;
+        --border-color: #4f565e;
+        --text-light: #eff5fa;
+        --text-muted: #b8bec5;
+      }
+
+      body {
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+      }
+
+      .navbar {
+        background-color: black !important;
+        border-bottom: 2px solid var(--primary-blue);
+      }
+
+      .navbar-light .navbar-brand,
+      .navbar-light .navbar-nav .nav-link {
+        color: var(--text-light) !important;
+        transition: color 0.2s ease-in-out;
+        margin-left: 10px;
+        margin-right: 10px;
+      }
+
+      .navbar-light .navbar-nav .nav-link:hover {
+        color: var(--primary-blue) !important;
+      }
+
+      .card {
+        background-color: whitesmoke;
+        border: 1px solid var(--border-color);
+      }
+      .card-header {
+        background-color: var(--bg-dark);
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .form-instruction,
+      .form-select {
+        background-color: white;
+        color: black;
+        border: 1px solid var(--text-muted);
+      }
+
+      .btn-primary {
+        background-color: var(--primary-blue);
+        border-color: var(--primary-blue);
+      }
+      .btn-primary:hover,
+      .btn-primary:focus,
+      .btn-primary:active,
+      .btn-primary.active,
+      .open > .dropdown-toggle.btn-primary {
+        background-color: #3583dc;
+        border-color: #3583dc;
+      }
+      .chart-container {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        height: 100%;
+        border: 1px solid var(--border-color);
+      }
+      .chart-container h2 {
+        color: black;
+      }
+
+      .nav-tabs {
+        border-bottom-color: #3583dc;
+        display: flex;
+      }
+      .nav-tabs .nav-link {
+        background-color: transparent;
+        border-color: white;
+        color: var(--text-muted);
+      }
+      .nav-tabs .nav-link.active {
+        color: black;
+        background-color: white;
+        border-color: var(--border-color) var(--border-color)
+          var(--surface-dark);
+      }
+      .nav-tabs .nav-link:hover {
+        border-color: #3583dc;
+        color: var(--primary-blue);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-md bg-light navbar-light shadow-sm">
+      <div class="container">
+        <img src="img/logo.png" alt="Logo" width="6%" style="float: left" />
+        <a href="./dashboard.html" class="navbar-brand">Home</a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a href="./escalations.html" class="nav-link">Audit Items</a>
+            </li>
+            <li class="nav-item">
+              <a href="./instructionEscalations.html" class="nav-link"
+                >Work Instruction Items</a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="./analysis_overview.html" class="nav-link"
+                >Overview Analysis</a
+              >
+            </li>
+            <li class="nav-item" id="admin-nav-item">
+              <a href="./admin.html" class="nav-link">Admin Page</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-5">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+              <label for="startDate" class="form-label"
+                ><strong>Start Date</strong></label
+              >
+              <input type="date" class="form-instruction" id="startDate" />
+            </div>
+            <div class="col-md-2">
+              <label for="endDate" class="form-label"
+                ><strong>End Date</strong></label
+              >
+              <input type="date" class="form-instruction" id="endDate" />
+            </div>
+            <div class="col-md-2">
+              <label for="areaSelect" class="form-label"
+                ><strong>Area</strong></label
+              >
+              <select id="areaSelect" class="form-select">
+                <option value="">All Areas</option>
+                <option value="Receiving">Receiving</option>
+                <option value="Assembly Line">Assembly Line</option>
+                <option value="Quality Control">Quality Control</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label for="stationSelect" class="form-label"
+                ><strong>Station</strong></label
+              >
+              <select id="stationSelect" class="form-select">
+                <option value="">All Stations</option>
+                <option value="Inventory">Inventory</option>
+                <option value="Warehouse">Warehouse</option>
+                <option value="Assembly">Assembly</option>
+                <option value="Painting">Painting</option>
+                <option value="Testing">Testing</option>
+                <option value="Final Inspection">Final Inspection</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label for="shiftSelect" class="form-label"
+                ><strong>Shift</strong></label
+              >
+              <select id="shiftSelect" class="form-select">
+                <option value="">All Shifts</option>
+                <option value="Day">Day</option>
+                <option value="Swing">Swing</option>
+                <option value="Grave">Night</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button id="apply-filters-btn" class="btn btn-primary w-100">
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ul
+        class="nav nav-tabs nav-justified mb-3"
+        id="analysisTabs"
+        role="tablist"
+      >
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link active"
+            id="performance-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#performance-pane"
+            type="button"
+            role="tab"
+          >
+            Score Performance
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="volume-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#volume-pane"
+            type="button"
+            role="tab"
+          >
+            Audit Count
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="instruction-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#instruction-pane"
+            type="button"
+            role="tab"
+          >
+            Work Instruction
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content" id="analysisTabsContent">
+        <div
+          class="tab-pane fade show active"
+          id="performance-pane"
+          role="tabpanel"
+        >
+          <div class="row">
+            <div class="col-lg-8 mb-4">
+              <div class="chart-container shadow-sm">
+                <h2 class="text-center h4 mb-3">Failures by Station</h2>
+                <canvas id="stationFailuresChart"></canvas>
+              </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+              <div class="chart-container shadow-sm">
+                <h2 class="text-center h4 mb-3">Response Breakdown</h2>
+                <canvas id="scoreDonutChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-12 mb-4">
+              <div class="chart-container shadow-sm">
+                <h2 class="text-center h4 mb-3">
+                  Average Quality Percentage by Month
+                </h2>
+                <canvas id="monthlyQualityChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="volume-pane" role="tabpanel">
+          <div class="row">
+            <div class="col-lg-8 mb-4">
+              <div class="chart-container shadow-sm">
+                <h2 class="text-center h4 mb-3">Audit Count by Station</h2>
+                <canvas id="auditCountChart"></canvas>
+              </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+              <div class="chart-container shadow-sm">
+                <h2 class="text-center h4 mb-3">Tech Audit Count</h2>
+                <canvas id="techCountChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="instruction-pane" role="tabpanel">
+          <div class="row" style="justify-content: center">
+            <div class="col-lg-8 mb-4">
+              <div class="chart-container shadow-sm">
+                <h2 class="text-center h4 mb-3">Work Instruction Issues</h2>
+                <canvas id="instructionIssuesChart"></canvas>
+              </div>
+            </div>
+
+            <div class="col-lg-8 mb-4">
+              <div class="chart-container shadow-sm">
+                <h2 class="text-center h4 mb-3">Work Instruction Not Done</h2>
+                <canvas id="instructionFailuresChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Demo data
+
+        const demo_areas = [
+          { area_id: 1, area_name: "Recieving" },
+          { area_id: 2, area_name: "Assembly Line" },
+          { area_id: 3, area_name: "Quality Control" },
+        ];
+        const demo_stations = [
+          { station_id: 1, area_id: 1, station_name: "Inventory" },
+          { station_id: 2, area_id: 1, station_name: "Warehouse" },
+          { station_id: 3, area_id: 2, station_name: "Assembly" },
+          { station_id: 4, area_id: 2, station_name: "Painting" },
+          { station_id: 5, area_id: 3, station_name: "Testing" },
+          { station_id: 6, area_id: 3, station_name: "Final Inspection" },
+        ];
+        const demo_data = {
+          failuresByStation: [
+            {
+              area_name: "Receiving",
+              station_name: "Assembly",
+              failure_count: 12,
+            },
+            {
+              area_name: "Assembly Line",
+              station_name: "Painting",
+              failure_count: 8,
+            },
+            {
+              area_name: "Assembly Line",
+              station_name: "Testing",
+              failure_count: 5,
+            },
+            {
+              area_name: "Quality Control",
+              station_name: "Final Inspection",
+              failure_count: 3,
+            },
+          ],
+          scoreBreakdown: [
+            { score: 2, score_count: 165 }, // Compliant
+            { score: 1, score_count: 42 }, // Partial
+            { score: 0, score_count: 14 }, // Noncompliant
+          ],
+          auditStationCount: [
+            {
+              area_name: "Receiving",
+              station_name: "Inventory",
+              audit_count: 65,
+            },
+            {
+              area_name: "Receiving",
+              station_name: "Warehouse",
+              audit_count: 40,
+            },
+            {
+              area_name: "Assembly Line",
+              station_name: "Testing",
+              audit_count: 32,
+            },
+            {
+              area_name: "Quality Control",
+              station_name: "Final Inspection",
+              audit_count: 25,
+            },
+          ],
+          techCount: [
+            { qa_tech_username: "Jesus C.", tech_count: 58 },
+            { qa_tech_username: "John D.", tech_count: 41 },
+            { qa_tech_username: "Jane D.", tech_count: 35 },
+            { qa_tech_username: "Vicente F.", tech_count: 12 },
+          ],
+          instructionFailures: [
+            {
+              area_name: "Receiving",
+              station_name: "Inventory",
+              instruction_failure_count: 4,
+            },
+            {
+              area_name: "Assembly Line",
+              station_name: "Painting",
+              instruction_failure_count: 3,
+            },
+          ],
+          instructionIssues: [
+            {
+              area_name: "Receiving",
+              station_name: "Assembly",
+              instruction_issue_count: 6,
+            },
+            {
+              area_name: "Quality Control",
+              station_name: "Testing",
+              instruction_issue_count: 5,
+            },
+            {
+              area_name: "Recieving",
+              station_name: "Warehouse",
+              instruction_issue_count: 5,
+            },
+            {
+              area_name: "Assembly Line",
+              station_name: "Warehouse",
+              instruction_issue_count: 5,
+            },
+            {
+              area_name: "Quality Control",
+              station_name: "Final Inspection",
+              instruction_issue_count: 3,
+            },
+            {
+              area_name: "Assembly Line",
+              station_name: "Warehouse",
+              instruction_issue_count: 1,
+            },
+          ],
+          monthlyQuality: [
+            { month: "Jan", average_score: 87 },
+            { month: "Feb", average_score: 90 },
+            { month: "Mar", average_score: 86 },
+            { month: "Apr", average_score: 93 },
+            { month: "May", average_score: 91 },
+            { month: "Jun", average_score: 95 },
+          ],
+        };
+
+        const areaSelect = document.getElementById("areaSelect");
+        const stationSelect = document.getElementById("stationSelect");
+
+        let stationChart,
+          scoreChart,
+          auditCount,
+          techCount,
+          instructionChart,
+          issuesChart,
+          monthlyChart;
+
+        function populateAreaFilter() {
+          areaSelect.innerHTML = '<option value="">All Areas</option>';
+          demo_areas.forEach((area) => {
+            areaSelect.add(new Option(area.area_name, area.area_id));
+          });
+        }
+
+        function populateStationFilter(areaId) {
+          stationSelect.innerHTML = '<option value="">All Stations</option>';
+
+          let filteredStations = demo_stations;
+          if (areaId) {
+            filteredStations = demo_stations.filter((s) => s.area_id == areaId);
+          }
+
+          filteredStations.forEach((s) => {
+            stationSelect.add(new Option(s.station_name, s.station_id));
+          });
+        }
+
+        areaSelect.addEventListener("change", () => {
+          populateStationFilter(areaSelect.value);
+        });
+
+        function createMonthlyQualityChart(data) {
+          if (monthlyChart) monthlyChart.destroy();
+          const ctx = document.getElementById("monthlyQualityChart");
+          if (!data || data.length === 0) {
+            ctx.getContext("2d").clearRect(0, 0, ctx.width, ctx.height);
+            return;
+          }
+
+          const labels = data.map((item) => item.month);
+          const values = data.map((item) => item.average_score);
+
+          monthlyChart = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Average Quality %",
+                  data: values,
+                  fill: false,
+                  borderColor: "rgb(75, 192, 192)",
+                  tension: 0.1,
+                  pointBackgroundColor: "rgb(75, 192, 192)",
+                  pointRadius: 5,
+                },
+              ],
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: false,
+                  suggestedMin: 50,
+                  suggestedMax: 100,
+                  ticks: {
+                    callback: function (value, index, ticks) {
+                      return value + "%";
+                    },
+                  },
+                },
+              },
+
+              plugins: {
+                legend: {
+                  display: false,
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      return `Avg Quality: ${context.parsed.y}%`;
+                    },
+                  },
+                },
+              },
+            },
+          });
+        }
+
+        function createStationFailures(data) {
+          if (stationChart) stationChart.destroy();
+          const ctx = document.getElementById("stationFailuresChart");
+          if (!data || data.length === 0) {
+            ctx.getContext("2d").clearRect(0, 0, ctx.width, ctx.height);
+            return;
+          }
+
+          const labels = data.map(
+            (item) => `${item.area_name} - ${item.station_name}`,
+          );
+          const values = data.map((item) => item.failure_count);
+
+          stationChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "# of Failures",
+                  data: values,
+                  backgroundColor: "rgba(255, 90, 90, 1)",
+                  borderColor: "rgba(210, 72, 72, 1)",
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              scales: { y: { beginAtZero: true } },
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+            },
+          });
+        }
+
+        function createScoreDonutChart(data) {
+          if (scoreChart) scoreChart.destroy();
+          const ctx = document
+            .getElementById("scoreDonutChart")
+            .getContext("2d");
+          const scoreMap = { 0: 0, 1: 0, 2: 0 };
+          data.forEach((item) => {
+            scoreMap[item.score] = item.score_count;
+          });
+
+          scoreChart = new Chart(ctx, {
+            type: "doughnut",
+            data: {
+              labels: ["Compliant (2)", "Partial (1)", "Noncompliant (0)"],
+              datasets: [
+                {
+                  label: "Total Responses",
+                  data: [scoreMap[2], scoreMap[1], scoreMap[0]],
+                  backgroundColor: [
+                    "rgb(75, 192, 137)",
+                    "rgb(255, 230, 86)",
+                    "rgb(255, 99, 99)",
+                  ],
+                  borderColor: [
+                    "rgba(75, 192, 192, 1)",
+                    "rgba(255, 206, 86, 1)",
+                    "rgba(255, 99, 132, 1)",
+                  ],
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { position: "top" } },
+            },
+          });
+        }
+        function createAuditCount(data) {
+          if (auditCount) auditCount.destroy();
+          const ctx = document.getElementById("auditCountChart");
+          if (!data || data.length === 0) {
+            ctx.getContext("2d").clearRect(0, 0, ctx.width, ctx.height);
+            return;
+          }
+
+          const labels = data.map(
+            (item) => `${item.area_name} - ${item.station_name}`,
+          );
+          const values = data.map((item) => item.audit_count);
+
+          auditCount = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "# of Audits",
+                  data: values,
+                  backgroundColor: "rgba(255, 90, 90, 1)",
+                  borderColor: "rgba(210, 72, 72, 1)",
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              scales: { y: { beginAtZero: true } },
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+            },
+          });
+        }
+        function createTechCount(data) {
+          if (techCount) techCount.destroy();
+          const ctx = document.getElementById("techCountChart");
+
+          const labels = data.map((item) => `${item.qa_tech_username}`);
+          const values = data.map((item) => item.tech_count);
+
+          techCount = new Chart(ctx, {
+            type: "doughnut",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Audits",
+                  data: values,
+
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { position: "top" } },
+            },
+          });
+        }
+        function createInstructionFailures(data) {
+          if (instructionChart) instructionChart.destroy();
+          const ctx = document.getElementById("instructionFailuresChart");
+          if (!data || data.length === 0) {
+            ctx.getContext("2d").clearRect(0, 0, ctx.width, ctx.height);
+            return;
+          }
+
+          const labels = data.map(
+            (item) => `${item.area_name} - ${item.station_name}`,
+          );
+          const values = data.map((item) => item.instruction_failure_count);
+
+          instructionChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "# of Failures",
+                  data: values,
+                  backgroundColor: "#66b6d2",
+                  borderColor: "#3ba1c5",
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              scales: { y: { beginAtZero: true } },
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+            },
+          });
+        }
+        function createInstructionIssues(data) {
+          if (issuesChart) issuesChart.destroy();
+          const ctx = document.getElementById("instructionIssuesChart");
+          if (!data || data.length === 0) {
+            ctx.getContext("2d").clearRect(0, 0, ctx.width, ctx.height);
+            return;
+          }
+
+          const labels = data.map(
+            (item) => `${item.area_name} - ${item.station_name}`,
+          );
+          const values = data.map((item) => item.instruction_issue_count);
+
+          issuesChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "# of issues",
+                  data: values,
+                  backgroundColor: "rgba(255, 90, 90, 1)",
+                  borderColor: "rgba(210, 72, 72, 1)",
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              scales: { y: { beginAtZero: true } },
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+            },
+          });
+        }
+        createStationFailures(demo_data.failuresByStation);
+        createScoreDonutChart(demo_data.scoreBreakdown);
+        createAuditCount(demo_data.auditStationCount);
+        createTechCount(demo_data.techCount);
+        createInstructionFailures(demo_data.instructionFailures);
+        createInstructionIssues(demo_data.instructionIssues);
+        createMonthlyQualityChart(demo_data.monthlyQuality);
+      });
+    </script>
+  </body>
+</html>

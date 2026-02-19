@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audit Dashboard (Demo)</title>
+
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --bg-dark: #212529;
+        --surface-dark: #363c42;
+        --primary-blue: #3583dc;
+        --border-color: #4f565e;
+        --text-light: #eff5fa;
+        --text-muted: #b8bec5;
+      }
+      body {
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+      }
+
+      .navbar {
+        background-color: black !important;
+        border-bottom: 2px solid var(--primary-blue);
+      }
+
+      .navbar-light .navbar-brand,
+      .navbar-light .navbar-nav .nav-link {
+        color: var(--text-light) !important;
+        transition: color 0.2s ease-in-out;
+        margin-left: 10px;
+        margin-right: 10px;
+      }
+
+      .navbar-light .navbar-nav .nav-link:hover {
+        color: var(--primary-blue) !important;
+      }
+
+      .table > tbody > th > tr > td {
+        vertical-align: middle;
+        font-size: 0.7rem;
+        background-color: #f0f0f0;
+        width: 100%;
+      }
+      .station-name {
+        font-size: 0.4rem;
+        text-align: left;
+        background-color: #e9ecef;
+      }
+      .today-column {
+        background-color: #d7ecfc !important;
+      }
+      .btn-primary {
+        background-color: #2196f3;
+        font-weight: bold;
+      }
+      .btn-warning {
+        background-color: #ffeb3b;
+        font-weight: bold;
+      }
+      .btn-danger {
+        background-color: #e53935;
+        font-weight: bold;
+      }
+      .btn-success {
+        background-color: #4caf50;
+        color: rgb(243, 243, 243);
+        font-weight: bold;
+      }
+
+      .btn-sm {
+        width: 100px;
+        height: 30px;
+        font-size: 0.7rem;
+      }
+      .btn-sm1 {
+        width: 100px;
+        height: 30px;
+        font-size: 0.7rem;
+      }
+      .btn-start-audit {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .itemconfiguration {
+        height: calc(100vh - 200px);
+        overflow-y: auto;
+      }
+      strong {
+        font-size: 1.2rem;
+      }
+      #audit-table thead th {
+        text-align: center;
+        vertical-align: middle;
+      }
+      .btn-secondary {
+        background-color: var(--primary-blue);
+        margin-bottom: 5px;
+        margin-top: 0px;
+        position: absolute;
+      }
+      .btn-secondary:hover {
+        background-color: #ee3649;
+      }
+      .dt-column-title {
+        text-align: center;
+      }
+      .table-container {
+        width: 100% !important;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-md bg-light navbar-light shadow-sm">
+      <div class="container">
+        <img src="img/logo.png" alt="Logo" width="6%" style="float: left" />
+
+        <a href="./dashboard.html" class="navbar-brand">Home</a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a href="./escalations.html" class="nav-link">Audit Items</a>
+            </li>
+            <li class="nav-item">
+              <a href="./controlEscalations.html" class="nav-link"
+                >Control Plan Items</a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="./analysis_overview.html" class="nav-link"
+                >Overview Analysis</a
+              >
+            </li>
+            <li class="nav-item" id="admin-nav-item">
+              <a href="./admin.html" class="nav-link">Admin Page</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container my-3">
+      <div class="row">
+        <div class="col-md-2">
+          <label for="startDate" class="form-label" style="margin-bottom: 0px"
+            >Start Date</label
+          >
+          <input
+            type="date"
+            class="form-control"
+            id="startDate"
+            value="2026-02-15"
+          />
+        </div>
+        <div class="col-md-2">
+          <label for="endDate" class="form-label" style="margin-bottom: 0px"
+            >End Date</label
+          >
+          <input
+            type="date"
+            class="form-control"
+            id="endDate"
+            value="2026-02-21"
+          />
+        </div>
+        <div class="col-md-3">
+          <label for="area-filter" style="margin-bottom: 0px" class="form-label"
+            >Area:</label
+          >
+          <select id="area-filter" class="form-select" required>
+            <option value="all">All Areas</option>
+            <option value="1">Receiving</option>
+            <option value="2">Assembly Line</option>
+            <option value="3">Quality Control</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <h3 class="text-center md-4" style="margin-bottom: 0px">
+            Station Audit
+          </h3>
+        </div>
+      </div>
+      <br />
+
+      <div class="table-container">
+        <table id="audit-table" class="table table-bordered text-center">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 10%">Station</th>
+              <th>Sun</th>
+              <th>Mon</th>
+              <th>Tue</th>
+              <th>Wed</th>
+              <th class="today-column">Thu</th>
+              <th>Fri</th>
+              <th>Sat</th>
+              <th style="width: 5%">Count</th>
+              <th style="width: 7%">Audit %</th>
+              <th style="width: 7%">CP %</th>
+            </tr>
+          </thead>
+
+          <tbody id="dashboard-body">
+            <tr>
+              <td>
+                <a href="#" class="btn btn-sm1 btn-primary btn-start-audit"
+                  >Inventory</a
+                >
+              </td>
+              <td></td>
+              <td><a href="#" class="btn btn-sm btn-success">95%</a></td>
+              <td></td>
+              <td></td>
+              <td class="today-column">
+                <a href="#" class="btn btn-sm btn-warning">88%</a>
+              </td>
+              <td></td>
+              <td></td>
+              <td><strong>2x</strong></td>
+              <td><strong class="text-success">92%</strong></td>
+              <td><strong class="text-success">90%</strong></td>
+            </tr>
+
+            <tr>
+              <td>
+                <a href="#" class="btn btn-sm1 btn-primary btn-start-audit"
+                  >Warehouse</a
+                >
+              </td>
+              <td></td>
+              <td></td>
+              <td><a href="#" class="btn btn-sm btn-success">92%</a></td>
+              <td></td>
+              <td class="today-column"></td>
+              <td><a href="#" class="btn btn-sm btn-success">100%</a></td>
+              <td></td>
+              <td><strong>2x</strong></td>
+              <td><strong class="text-success">96%</strong></td>
+              <td><strong class="text-success">92%</strong></td>
+            </tr>
+
+            <tr>
+              <td>
+                <a href="#" class="btn btn-sm1 btn-primary btn-start-audit"
+                  >Assembly</a
+                >
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td><a href="#" class="btn btn-sm btn-danger">75%</a></td>
+              <td class="today-column"></td>
+              <td></td>
+              <td></td>
+              <td><strong>1x</strong></td>
+              <td><strong class="text-danger">75%</strong></td>
+              <td><strong class="text-warning">80%</strong></td>
+            </tr>
+
+            <tr>
+              <td>
+                <a href="#" class="btn btn-sm1 btn-primary btn-start-audit"
+                  >Painting</a
+                >
+              </td>
+              <td></td>
+              <td><a href="#" class="btn btn-sm btn-success">98%</a></td>
+              <td></td>
+              <td><a href="#" class="btn btn-sm btn-warning">85%</a></td>
+              <td class="today-column"></td>
+              <td></td>
+              <td></td>
+              <td><strong>2x</strong></td>
+              <td><strong class="text-success">92%</strong></td>
+              <td><strong class="text-success">93%</strong></td>
+            </tr>
+
+            <tr>
+              <td>
+                <a href="#" class="btn btn-sm1 btn-primary btn-start-audit"
+                  >Testing</a
+                >
+              </td>
+              <td></td>
+              <td></td>
+              <td><a href="#" class="btn btn-sm btn-warning">82%</a></td>
+              <td></td>
+              <td class="today-column">
+                <a href="#" class="btn btn-sm btn-success">90%</a>
+              </td>
+              <td></td>
+              <td></td>
+              <td><strong>2x</strong></td>
+              <td><strong class="text-warning">86%</strong></td>
+              <td><strong class="text-warning">89%</strong></td>
+            </tr>
+
+            <tr>
+              <td>
+                <a href="#" class="btn btn-sm1 btn-primary btn-start-audit"
+                  >Final Inspection</a
+                >
+              </td>
+              <td></td>
+              <td><a href="#" class="btn btn-sm btn-success">100%</a></td>
+              <td></td>
+              <td><a href="#" class="btn btn-sm btn-success">91%</a></td>
+              <td class="today-column"></td>
+              <td><a href="#" class="btn btn-sm btn-info">Not Completed</a></td>
+              <td></td>
+              <td><strong>3x</strong></td>
+              <td><strong class="text-success">95%</strong></td>
+              <td><strong class="text-success">94%</strong></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th colspan="8" style="text-align: right">
+                <strong>Totals:</strong>
+              </th>
+              <th><strong>12x</strong></th>
+              <th><strong class="text-success">89%</strong></th>
+              <th><strong class="text-success">90%</strong></th>
+            </tr>
+            <tr>
+              <th colspan="10" style="text-align: right">
+                <strong>Weekly Average %:</strong>
+              </th>
+              <th><strong class="text-success">90%</strong></th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
+  </body>
+</html>

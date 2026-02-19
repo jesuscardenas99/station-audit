@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>View Audit</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-dark: #212529;
+        --surface-dark: #363c42;
+        --primary-blue: #3583dc;
+        --border-color: #4f565e;
+        --text-light: #eff5fa;
+        --text-muted: #b8bec5;
+      }
+      body {
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+      }
+
+      .navbar {
+        background-color: black !important;
+        border-bottom: 2px solid var(--primary-blue);
+      }
+
+      .navbar-light .navbar-brand,
+      .navbar-light .navbar-nav .nav-link {
+        color: var(--text-light) !important;
+        transition: color 0.2s ease-in-out;
+        margin-left: 10px;
+        margin-right: 10px;
+      }
+
+      .navbar-light .navbar-nav .nav-link:hover {
+        color: var(--primary-blue) !important;
+      }
+
+      .table > tbody > tr > td {
+        vertical-align: middle;
+        font-size: 0.7rem;
+        background-color: #f0f0f0;
+      }
+
+      .itemconfiguration {
+        height: calc(100vh - 200px);
+        overflow-y: auto;
+      }
+      strong {
+        font-size: 1.4em;
+      }
+      .quality-percentage-display {
+        font-size: 2rem;
+        font-weight: bold;
+      }
+      .card-body p {
+        white-space: pre-wrap;
+      }
+      h1 {
+        border-bottom: 2px solid var(--primary-blue);
+        padding-bottom: 0.25rem;
+        display: inline-block;
+      }
+      h1 {
+        border-bottom: 2px solid var(--primary-blue);
+        padding-bottom: 0.25rem;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-md bg-light navbar-light shadow-sm">
+      <div class="container">
+        <img src="img/logo.png" alt="Logo" width="6%" style="float: left" />
+
+        <a href="./index.html" class="navbar-brand">Home</a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a href="./escalations.html" class="nav-link">Audit Items</a>
+            </li>
+            <li class="nav-item">
+              <a href="./controlEscalations.html" class="nav-link"
+                >Control Plan Items</a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="./analysis_overview.html" class="nav-link"
+                >Overview Analysis</a
+              >
+            </li>
+            <li class="nav-item" id="admin-nav-item">
+              <a href="./admin.html" class="nav-link">Admin Page</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container my-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Audit Report</h1>
+      </div>
+
+      <div id="audit-content">
+        <h2 class="text-muted">Loading Audit...</h2>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE_URL = "/system/webdev/Quality/tech_audit/plant_one";
+
+      window.onload = function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const auditId = urlParams.get("audit_id");
+        const contentDiv = document.getElementById("audit-content");
+
+        if (!auditId) {
+          contentDiv.innerHTML = `<div class="alert alert-danger">No Audit ID provided.</div>`;
+          return;
+        }
+
+        fetch(`${API_BASE_URL}/api/audit?id=${auditId}`)
+          .then((response) => {
+            if (!response.ok)
+              throw new Error(`Server error: ${response.status}`);
+            return response.json();
+          })
+          .then((data) => {
+            if (data.error) throw new Error(data.error);
+            renderReadOnlySummary(data);
+          })
+          .catch((error) => {
+            contentDiv.innerHTML = `<div class="alert alert-danger">Failed to load audit: ${error.message}</div>`;
+          });
+      };
+
+      function renderReadOnlySummary(auditData) {
+        const container = document.getElementById("audit-content");
+        const details = auditData.details;
+
+        // Calculate percentage
+        let totalScore = 0;
+        let totalPossible = 0;
+        Object.values(auditData.responses).forEach((resp) => {
+          if (resp.score !== null) {
+            totalScore += resp.score;
+            totalPossible += 2;
+          }
+        });
+        const percentage =
+          totalPossible > 0
+            ? Math.round((totalScore / totalPossible) * 100)
+            : 0;
+        const color =
+          percentage >= 90
+            ? "text-success"
+            : percentage >= 80
+              ? "text-warning"
+              : "text-danger";
+        const auditDate = new Date(details.audit_date).toLocaleDateString();
+        const auditTime = new Date(details.audit_date);
+        const options = {
+          hour: "2-digit",
+          minute: "2-digit",
+        };
+
+        const auditTimeWithoutSec = auditTime.toLocaleTimeString([], options);
+
+        let detailsHtml = `
+									                    <div class="d-flex justify-content-between align-items-center">
+									                        <h2> </h2>
+									                        <span class="quality-percentage-display ${color}">${percentage}%</span>
+									                    </div>
+									                    <div class="card mb-4">
+									                        <div class="card-body">
+									                            <h5 class="card-title">Audit Details</h5>
+									                            <ul class="list-group list-group-flush">
+									                                <li class="list-group-item"><strong>Date of Audit:</strong> ${auditDate} ${auditTimeWithoutSec}</li>
+									                                <li class="list-group-item"><strong>Shift Audited:</strong> ${
+                                                    details.shift_audited ||
+                                                    "N/A"
+                                                  }</li>
+									                                <li class="list-group-item"><strong>APU Audited:</strong> ${
+                                                    details.apu_name || "N/A"
+                                                  }</li>
+						                                      <li class="list-group-item"><strong>SKU:</strong> ${
+                                                    details.sku || "N/A"
+                                                  }</li>
+									                                <li class="list-group-item"><strong>Station Audited:</strong> ${
+                                                    details.station_name ||
+                                                    "N/A"
+                                                  }</li>
+									                                <li class="list-group-item"><strong>QA Tech:</strong> ${
+                                                    details.qa_tech_username ||
+                                                    "N/A"
+                                                  }</li>
+									                            </ul>
+									                        </div>
+									                    </div>`;
+
+        let responsesHtml = "<h3>Question Responses</h3>";
+        Object.keys(auditData.responses)
+          .sort((a, b) => parseInt(a) - parseInt(b))
+          .forEach((qNum) => {
+            const response = auditData.responses[qNum];
+            const labels = ["Noncompliant", "Partial", "Compliant"];
+            const colors = ["danger", "warning", "success"];
+            let score = response.score === null ? 0 : response.score;
+            responsesHtml += `
+									                        <div class="card border-${colors[score]} mb-3">
+									                            <div class="card-header bg-${
+                                                colors[score]
+                                              } text-white">Question ${qNum}: ${
+                                                response.question
+                                              }</div>
+									                            <div class="card-body">
+									                                <p><strong>Score:</strong> ${labels[score]}</p>
+									                                <p><strong>Evidence:</strong> ${
+                                                    response.evidence ||
+                                                    "No notes provided."
+                                                  }</p>
+									                            </div>
+									                        </div>`;
+          });
+
+        let finalNotesHtml = "";
+
+        if (
+          details.notes_outside_scope ||
+          details.notes_special_tasks ||
+          details.notes_incomplete_tasks
+        ) {
+          finalNotesHtml = `
+									                        <div class="card shadow-sm mt-4">
+									                            <div class="card-header"><h2>Final Notes</h2></div>
+									                            <div class="card-body">
+									                                <div class="mb-3">
+									                                    <h6 class="form-label"><strong>Findings Identified Outside of Scope:</strong></h6>
+									                                    <p class="text-muted p-2 bg-light rounded">${
+                                                        details.notes_outside_scope ||
+                                                        "None"
+                                                      }</p>
+									                                </div>
+									                                <hr>
+									                                <div class="mb-3">
+									                                    <h6 class="form-label"><strong>Special Tasks Completed:</strong></h6>
+									                                    <p class="text-muted p-2 bg-light rounded">${
+                                                        details.notes_special_tasks ||
+                                                        "None"
+                                                      }</p>
+									                                </div>
+									                                <hr>
+									                                <div class="mb-3">
+									                                    <h6 class="form-label"><strong>Remaining Incomplete Tasks:</strong></h6>
+									                                    <p class="text-muted p-2 bg-light rounded">${
+                                                        details.notes_incomplete_tasks ||
+                                                        "None"
+                                                      }</p>
+									                                </div>
+									                            </div>
+									                        </div>`;
+        }
+
+        container.innerHTML = detailsHtml + responsesHtml + finalNotesHtml;
+      }
+    </script>
+  </body>
+</html>
